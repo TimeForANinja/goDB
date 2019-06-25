@@ -1,0 +1,49 @@
+ByteInt | Value | Meaning
+------------------------------------------------------ Head
+0       | 103   | "g"
+1       | 111   | "o"
+2       | 68    | "D"
+3       | 66    | "B"
+4       | 0     | Major Version 0
+5       | 0     | Minor Version 0
+6       | 0     | Patch Version 0
+
+------------------------------------------------------ Table Scheme
+0       | <=1   | Number of Columns
+1       | n     | Name size
+1-n     |       | Name (as utf8)
+------------------------------------------- For each Columns
+#.0     |       | Type of Columns
+#.1     | 1     | Flags [UNIQUE, NOT NULL, AUTO_INCREMENT, PRIMARY_KEY, ...]
+#.2     | n     | Name size
+#.3-#.n |       | Name (as utf8)
+
+
+------------------------------------------------------ Indizes
+0       | a     | start byte for first row
+1       | b     | start byte for second row
+
+------------------------------------------------------ Data
+#.0     | 0     | Index
+#.1     | #.n+1 | Start of next Row
+
+
+
+# DATA
+use pages of ~4 kilobytes
+https://cstack.github.io/db_tutorial/parts/part7.html
+
+# METHODS
+SELECT
+INSERT
+UPDATE
+DELETE
+
+# TYPES
+UINT_8/16/32/64
+INT_8/16/32/64
+DATE=>UINT_64
+UTF8_STRING
+BOOL
+FLOAT/NUMBER/REAL
+BINARY
