@@ -1,17 +1,35 @@
-ByteInt | Value | Meaning
------------------------------------------------------- Head
-0       | 103   | "g"
-1       | 111   | "o"
-2       | 68    | "D"
-3       | 66    | "B"
-4       | 0     | Major Version 0
-5       | 0     | Minor Version 0
-6       | 0     | Patch Version 0
+Offset | Length | Value | Meaning
+------------------------------------------------------ Head (first 128 bytes)
+0       | 5     | 103, 111, 68, 66, 00   | "goDB" as utf8 string
+-----------------
+5       | 3     | 0, 0, 0            | Major, Minor and Patch version of goDB
+8       | 2     | 512 - 32768        | database page size in bytes (power of two)
+10      | 4     |                    | File change counter
+14      | 4     |                    | Count of Database Pages
+18      | 4     |                    | Default page cache size
+19      | 108   |                    | Reserved for future use
 
------------------------------------------------------- Table Scheme
-0       | <=1   | Number of Columns
-1       | n     | Name size
-1-n     |       | Name (as utf8)
+------------------------------------------------------ HeadEncrypted (first 128 bytes)
+0       | 16    |                    | iv for header
+16      | 9     | 103, 111, 68, 66, 32, 101, 110, 99, 00   | "goDB enc" as utf8 string
+25      | 32    |                    | Master encryption key
+-----------------
+57      | 3     | 0, 0, 0            | Major, Minor and Patch version of goDB
+60      | 2     | 512 - 32768        | database page size in bytes (power of two)
+62      | 4     |                    | File change counter
+66      | 4     |                    | Count of Database Pages
+70      | 4     |                    | Default page cache size
+74      | 54    |                    | Reserved for future use
+
+------------------------------------------------------ Table list
+n       | 4     | index of table
+n+4     | 4     | Number of Columns
+n+8     | 4     | Index of Column Definition page
+n+12    | 4     | Index of First Content Page
+n+16    | 4     | Row Count
+n+18    | 4     | length of table name
+n+22    | k     | Table Name (as utf8)
+
 ------------------------------------------- For each Columns
 #.0     |       | Type of Columns
 #.1     | 1     | Flags [UNIQUE, NOT NULL, AUTO_INCREMENT, PRIMARY_KEY, ...]
@@ -44,6 +62,6 @@ UINT_8/16/32/64
 INT_8/16/32/64
 DATE=>UINT_64
 UTF8_STRING
-BOOL
+BOOL=>UINT_8
 FLOAT/NUMBER/REAL
-BINARY
+BINARY/BLOB
