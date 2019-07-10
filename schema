@@ -1,25 +1,4 @@
 Offset | Length | Value | Meaning
------------------------------------------------------- Head (first 128 bytes)
-0       | 5     | 103, 111, 68, 66, 00   | "goDB" as utf8 string
------------------
-5       | 3     | 0, 0, 0            | Major, Minor and Patch version of goDB
-8       | 2     | 512 - 32768        | database page size in bytes (power of two)
-10      | 4     |                    | File change counter
-14      | 4     |                    | Count of Database Pages
-18      | 4     |                    | Default page cache size
-19      | 108   |                    | Reserved for future use
-
------------------------------------------------------- HeadEncrypted (first 128 bytes)
-0       | 16    |                    | iv for header
-16      | 9     | 103, 111, 68, 66, 32, 101, 110, 99, 00   | "goDB enc" as utf8 string
-25      | 32    |                    | Master encryption key
------------------
-57      | 3     | 0, 0, 0            | Major, Minor and Patch version of goDB
-60      | 2     | 512 - 32768        | database page size in bytes (power of two)
-62      | 4     |                    | File change counter
-66      | 4     |                    | Count of Database Pages
-70      | 4     |                    | Default page cache size
-74      | 54    |                    | Reserved for future use
 
 ------------------------------------------------------ Table list
 n       | 4     | index of table
