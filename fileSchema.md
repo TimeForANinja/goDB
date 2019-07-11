@@ -57,7 +57,7 @@ the first 128 bytes of the database file, including basic information (and encry
 > ### table_schema>head
 > | Byte Offset | Length | Meaning |
 > | --- | --- | --- |
-> | 0 | 4 | page type (always 0) |
+> | 0 | 4 | page type (always 1) |
 > | 4 | 4 | index of previous page |
 > | 8 | 4 | index of next page |
 > | 12 | 4 | count of columns |
@@ -75,7 +75,53 @@ the first 128 bytes of the database file, including basic information (and encry
 > | k+10 | 4 | column name size |
 > | k+14 | n | column name (as utf8) |
 ## empty_pages_list (id=2)
+> a page that lists all empty / unused pages
+> ### empty_pages_list>head
+> | Byte Offset | Length | Meaning |
+> | --- | --- | --- |
+> | 0 | 4 | page type (always 2) |
+> | 4 | 4 | index of previous page |
+> | 8 | 4 | index of next page |
+> | 12 | 52 | reserved for future use |
+>
+> ### empty_pages_list>body
+> for each page in the list:
+>
+> | Byte Offset | Length | Meaning |
+> | --- | --- | --- |
+> | k | 4 | index of empty page |
 ## content (id=3)
+> a page with content of a table
+> ### content>head
+> | Byte Offset | Length | Meaning |
+> | --- | --- | --- |
+> | 0 | 4 | page type (always 3) |
+> | 4 | 4 | index of previous page |
+> | 8 | 4 | index of next page |
+> | 12 | 4 | index of the first row (if starting with data that didn't fit previous page) |
+> | 16 | 48 | reserved for future use |
+>
+> ### content>body
+> start of a row
+>
+> | Byte Offset | Length | Meaning |
+> | --- | --- | --- |
+> | k | 4 | index of row |
+> | k+4 | 4 | index of next row |
+>
+> for each column:
+>
+> | Byte Offset | Length | Meaning |
+> | --- | --- | --- |
+> | 0 | 1 | bool: isNull |
+> | 1 | 4 | optional: content_length |
+> | 5 | n | content |
+
+# Methods
+* SELECT
+* INSERT
+* UPDATE
+* DELETE
 
 # column_type
 > | Value | Type |
