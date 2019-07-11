@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 )
@@ -159,13 +158,6 @@ func (db Database) writeHead() error {
 		copy(data[:5], []byte{103, 111, 68, 66, 00})
 		copy(data[5:], db.fileinfo.toBytes())
 	}
-	// TODO: check whether data is still 128 byte long
-	fmt.Print("writeHead for ")
-	if !db.encryption {
-		fmt.Print("un")
-	}
-	fmt.Print("encrypted database with length ")
-	fmt.Println(len(data))
 
 	db.file.WriteAt(data, 0)
 	return nil
@@ -187,6 +179,21 @@ func Open(file string) (*Database, error) {
 		return nil, errors.New("Invalid File")
 	}
 	db.fileinfo = parseFileInfo(data[5:])
+	return db, nil
+}
+func NewDB(file string) (*Database, error) {
+	db := &Database{encryption: false, encryptionKey: nil}
+	var err error
+
+	db.file, err = os.Create(file)
+	if err != nil {
+		return nil, err
+	}
+	db.fileinfo = defaultFileInfo()
+	err = db.writeHead()
+	if err != nil {
+		return nil, err
+	}
 	return db, nil
 }
 func OpenEnc(file, passphrase string) (*Database, error) {
