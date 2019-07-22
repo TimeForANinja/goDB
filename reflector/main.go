@@ -1,12 +1,11 @@
-package main
+package reflector
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 )
 
-var SupportetTypes = []string{"uint8", "uint16", "uint32", "uint64", "int8", "int16", "int32", "int64", "_date", "string", "bool", "_float_number_real", "_blob"}
+var SupportetTypes = []string{"uint8", "uint16", "uint32", "uint64", "int8", "int16", "int32", "int64", "Time", "string", "bool", "float64", "_blob"}
 
 type Table struct {
 	master      interface{}
@@ -68,31 +67,4 @@ func (t *Table) ReadRow(index int) interface{} {
 		*/
 	}
 	return response.Elem()
-}
-
-/*
- * Data for testing purpose
- */
-type test struct {
-	A int64  `goDB:"AUTO_INCREMENT,UNIQUE"`
-	B string `goDB:"NOT_NULL"`
-	C uint8
-}
-
-func main() {
-	x := test{-5, "yey", 9}
-
-	fmt.Print("x: ")
-	fmt.Println(x)
-
-	t := NewTable(x)
-	t.AddRow(x)
-	x.A = -6
-
-	fmt.Print("t: ")
-	fmt.Println(t)
-	fmt.Print("x(read): ")
-	fmt.Println(t.ReadRow(0))
-	fmt.Print("x(org): ")
-	fmt.Println(x)
 }

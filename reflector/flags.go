@@ -1,4 +1,4 @@
-package main
+package reflector
 
 /*
  Database Flags
@@ -42,7 +42,7 @@ func FlagsFromByte(b byte) Flags {
 		PRIMARY_KEY:    uint8(b)&8 == 1,
 	}
 }
-func (f Flags) toByte() byte {
+func (f Flags) ToByte() byte {
 	var output uint8
 	if f.UNIQUE {
 		output += 1
