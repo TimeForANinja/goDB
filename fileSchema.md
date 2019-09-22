@@ -54,15 +54,15 @@ the header contains the following information
 >
 > The general Header is composed of the following:
 >
-> | start index | length (in bytes) |  description |
-> | --- | --- | --- |
-> | 0 | 1 | the type of the page [(indexes can be found below)](#types-of-pages) |
-> | 1 | 4 | the id of the previous page |
-> | 5 | 4 | the id of the next page |
-> | 9 | 2 | the first relevant byte holding data (relevant when data is overlapping one page) |
-> | 11 | 4 | AUTO_INCREMENT counter |
-> | 15 | 33 | reserved for page specific use |
-> | 48 | 16 | unusable to keep the page header at 64 bytes when using encryption |
+> | start index | length (in bytes) | added in | description |
+> | --- | --- | --- | --- |
+> | 0 | 1 | v1 | the type of the page [(indexes can be found below)](#types-of-pages) |
+> | 1 | 4 | v1 | the id of the previous page |
+> | 5 | 4 | v1 | the id of the next page |
+> | 9 | 2 | v1 | the first relevant byte holding data (relevant when data is overlapping one page) |
+> | 11 | 4 | v1 | AUTO_INCREMENT counter |
+> | 15 | 33 | / | reserved for page specific use |
+> | 48 | 16 | / | unusable to keep the page header at 64 bytes when using encryption |
 >
 > ## Encryption of Pages
 > Encryption of a page is not optional. If the file description is "goDB enc" all pages are encrypted.
@@ -85,16 +85,16 @@ the header contains the following information
 >
 > Content, repeated for every table:
 >
-> | start index | length (in bytes) | description |
-> | --- | --- | --- |
-> | 0 | 4 | entry length |
-> | 4 | 4 | table uid |
-> | 8 | 4 | page index of first table_schema page |
-> | 12 | 4 | page index of first table_rows page |
-> | 16 | 4 | row count |
-> | 20 | 4 | column count |
-> | 24 | 2 | table name length |
-> | 26 | n | table name (utf8) |
+> | start index | length (in bytes) | added in | description |
+> | --- | --- | --- | --- |
+> | 0 | 4 | v1 | entry length |
+> | 4 | 4 | v1 | table uid |
+> | 8 | 4 | v1 | page index of first table_schema page |
+> | 12 | 4 | v1 | page index of first table_rows page |
+> | 16 | 4 | v1 | row count |
+> | 20 | 4 | v1 | column count |
+> | 24 | 2 | v1 | table name length |
+> | 26 | n | v1 | table name (utf8) |
 >
 > ### Table schema page
 > The table_schema is a page with **type=1** that holds information on how a single table is build
@@ -103,14 +103,14 @@ the header contains the following information
 >
 > Content, repeated for every column:
 >
-> | start index | length (in bytes) | description |
-> | --- | --- | --- |
-> | 0 | 4 | entry length |
-> | 4 | 4 | column uid |
-> | 8 | 1 | columns [data type](#column-data-type) |
-> | 9 | 1 | columns [flags](#column-flags) |
-> | 10 | 2 | column name size |
-> | 12 | n | column name (utf8) |
+> | start index | length (in bytes) | added in | description |
+> | --- | --- | --- | --- |
+> | 0 | 4 | v1 | entry length |
+> | 4 | 4 | v1 | column uid |
+> | 8 | 1 | v1 | columns [data type](#column-data-type) |
+> | 9 | 1 | v1 | columns [flags](#column-flags) |
+> | 10 | 2 | v1 | column name size |
+> | 12 | n | v1 | column name (utf8) |
 >
 > ### Empty pages page
 > The empty_Pages is a page with **type=2** that holds information on tables that where free'ed up.
@@ -124,11 +124,11 @@ the header contains the following information
 >
 > Content, for each row of Data:
 >
-> | start index | length (in bytes) | description |
-> | --- | --- | --- |
-> | 0 | 4 | entry length |
-> | 4 | 4 | row uid |
-> | 8 | n | concat of all column_data |
+> | start index | length (in bytes) | added in | description |
+> | --- | --- | --- | --- |
+> | 0 | 4 | v1 | entry length |
+> | 4 | 4 | v1 | row uid |
+> | 8 | n | v1 | concat of all column_data |
 >
 > The **column_data** is a very basic construct of:
 > * 1 optional isNull byte (depends on the nullable column flag)
@@ -136,33 +136,33 @@ the header contains the following information
 > * the content bytes itself
 
 > # Column Data Type
-> | Value | Type |
-> | --- | --- |
-> | 0 | UINT_8 |
-> | 1 | UINT_16 |
-> | 2 | UINT_32 |
-> | 3 | UINT_64 |
-> | 4 | INT_8 |
-> | 5 | INT_16 |
-> | 6 | INT_32 |
-> | 7 | INT_64 |
-> | 8 | DATE |
-> | 9 | UTF8_STRING |
-> | 10 | BOOLEAN |
-> | 11 | ? FLOAT/NUMBER/REAL |
-> | 12 | ? BLOB |
-> | 13-255 | reserved for future use |
+> | Value | added in | Type |
+> | --- | --- | --- |
+> | 0 | v1 | UINT_8 |
+> | 1 | v1 | UINT_16 |
+> | 2 | v1 | UINT_32 |
+> | 3 | v1 | UINT_64 |
+> | 4 | v1 | INT_8 |
+> | 5 | v1 | INT_16 |
+> | 6 | v1 | INT_32 |
+> | 7 | v1 | INT_64 |
+> | 8 | v1 | DATE |
+> | 9 | v1 | UTF8_STRING |
+> | 10 | v1 | BOOLEAN |
+> | 10-255 | / | reserved for future use |
 
 > # Column Flags
-> | Bit | Type |
-> | --- | --- |
-> | 0 | UNIQUE |
-> | 1 | NOT_NULL |
-> | 2 | AUTO_INCREMENT |
-> | 3 | PRIMARY_KEY |
-> | 4-7 | reserved for future use |
+> | Bit | added in | Type |
+> | --- | --- | --- |
+> | 0 | v1 | UNIQUE |
+> | 1 | v1 | NOT_NULL |
+> | 2 | v1 | AUTO_INCREMENT |
+> | 3 | v1 | PRIMARY_KEY |
+> | 4-7 | / | reserved for future use |
 
 > # Future
+> * should support blob as [data type](#column-data-type)
+> * should support some form of float/number/real as [data type](#column-data-type)
 > * might add a "file change counter" field to header
 > * might add a "default page cache size" field to header
 > * should look into for thread-safety / multi threading capability
