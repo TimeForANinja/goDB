@@ -13,7 +13,10 @@ the first 128 bytes of the database file, including basic information (and encry
 > | 10 | 4 | File change counter |
 > | 14 | 4 | Count of Database Pages |
 > | 18 | 4 | Default page cache size |
-> | 19 | 108 | Reserved for future use |
+> | 22 | 4 | page index of first table_schema |
+> | 26 | 4 | page index of first empty_pages_list |
+> | 30 | 4 | page index of first table_list |
+> | 34 | 94 | Reserved for future use |
 >
 > ## encrypted header
 > | Byte Offset | Length | Encrypted | Meaning |
@@ -26,7 +29,10 @@ the first 128 bytes of the database file, including basic information (and encry
 > | 62 | 4 | true | File change counter |
 > | 66 | 4 | true | Count of Database Pages |
 > | 70 | 4 | true | Default page cache size |
-> | 74 | 54 | true | Reserved for future use |
+> | 74 | 4 | true | page index of first table_schema |
+> | 78 | 4 | true | page index of first empty_pages_list |
+> | 82 | 4 | true | page index of first table_list |
+> | 86 | 42 | true | Reserved for future use |
 
 # Pages
 ## table_list (id=0)
