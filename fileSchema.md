@@ -2,17 +2,17 @@
 
 * [General](#general)
 * [Header](#header)
-  * [encryption of header](#encryption_of_header)
+  * [encryption of header](#encryption-of-header)
 * [Pages](#pages)
-  * [Page Header](#page_header)
-  * [encryption of pages](#encryption_of_pages)
-  * [Types of pages](#types_of_pages)
-    * [Table list page](#table_list_page)
-    * [Table schema page](#table_schema_page)
-    * [Empty pages page](#empty_pages_page)
-    * [Table rows page](#table_rows_page)
-* [Column Data Type](#column_data_type)
-* [Column Flags](#column_flags)
+  * [Page Header](#page-header)
+  * [encryption of pages](#encryption-of-pages)
+  * [Types of pages](#types-of-pages)
+    * [Table list page](#table-list-page)
+    * [Table schema page](#table-schema-page)
+    * [Empty pages page](#empty-pages-page)
+    * [Table rows page](#table-rows-page)
+* [Column Data Type](#column-data-type)
+* [Column Flags](#column-flags)
 * [Future](#future)
 
 > # General
@@ -56,7 +56,7 @@ the header contains the following information
 >
 > | start index | length (in bytes) |  description |
 > | --- | --- | --- |
-> | 0 | 1 | the type of the page [(indexes can be found below)](#types_of_pages) |
+> | 0 | 1 | the type of the page [(indexes can be found below)](#types-of-pages) |
 > | 1 | 4 | the id of the previous page |
 > | 5 | 4 | the id of the next page |
 > | 9 | 2 | the first relevant byte holding data (relevant when data is overlapping one page) |
@@ -73,10 +73,10 @@ the header contains the following information
 > ## Types of pages
 > At the moment 4 types of pages are implemented:
 >
-> * [table_list](#table_list_page) **(type=0)** to hold a list of all database tables. It's first page is referenced in the [Header](#header).
-> * [table_schema](#table_schema_page) **(type=1)** to hold the information about the columns of a table. It's first page is referenced in the [table_list](#table_list_page).
-> * [empty_pages_list](#empty_pages_page) **(type=2)** to hold a list of empty pages that became free to use after deletion. It's first page is also referenced in the [Header](#header).
-> * [table_rows](#table_rows_page) **(type=3)** to hold the data of a table. It's first page is referenced in the [table_list](#table_list).
+> * [table_list](#table-list-page) **(type=0)** to hold a list of all database tables. It's first page is referenced in the [Header](#header).
+> * [table_schema](#table-schema-page) **(type=1)** to hold the information about the columns of a table. It's first page is referenced in the [table_list](#table-list-page).
+> * [empty_pages_list](#empty-pages-page) **(type=2)** to hold a list of empty pages that became free to use after deletion. It's first page is also referenced in the [Header](#header).
+> * [table_rows](#table-rows-page) **(type=3)** to hold the data of a table. It's first page is referenced in the [table_list](#table-list).
 >
 > ### Table list page
 > The table_list is a page with **type=0** that holds information on which tables exist.
@@ -107,8 +107,8 @@ the header contains the following information
 > | --- | --- | --- |
 > | 0 | 4 | entry length |
 > | 4 | 4 | column uid |
-> | 8 | 1 | columns [data type](#column_data_type) |
-> | 9 | 1 | columns [flags](#column_flags) |
+> | 8 | 1 | columns [data type](#column-data-type) |
+> | 9 | 1 | columns [flags](#column-flags) |
 > | 10 | 2 | column name size |
 > | 12 | n | column name (utf8) |
 >
