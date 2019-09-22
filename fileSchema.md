@@ -1,135 +1,141 @@
-# Todo
-* Header > indizes of table_schema
-* Header > indizes of empty_pages_list
+# Table of content
 
-# Header
-the first 128 bytes of the database file, including basic information (and encryption details)
-> ## non-encrypted Header
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | 0 | 5 | "goDB" (and trailing 00) as utf8 string |
-> | 5 | 3 | Version in Format Major, Minor, Path |
-> | 8 | 2 | database page size in bytes (power of two between 512 and 32768)
-> | 10 | 4 | File change counter |
-> | 14 | 4 | Count of Database Pages |
-> | 18 | 4 | Default page cache size |
-> | 22 | 4 | page index of first table_schema |
-> | 26 | 4 | page index of first empty_pages_list |
-> | 30 | 4 | page index of first table_list |
-> | 34 | 94 | Reserved for future use |
+* [General](#general)
+* [Header](#header)
+  * [encryption of header](#encryption_of_header)
+* [Pages](#pages)
+  * [Page Header](#page_header)
+  * [encryption of pages](#encryption_of_pages)
+  * [Types of pages](#types_of_pages)
+    * [Table list page](#table_list_page)
+    * [Table schema page](#table_schema_page)
+    * [Empty pages page](#empty_pages_page)
+    * [Table rows page](#table_rows_page)
+* [Column Data Type](#column_data_type)
+* [Column Flags](#column_flags)
+* [Future](#future)
+
+> # General
+> The Database file is composed of two parts.
+> 1. The leading 128 bytes which make up the [Header](#header) and contain basic information on how to parse the database.
+> 2. Repeating blocks of a fixed size (defaults to 4096 bytes) called the [Pages](#pages). There are different types of pages defining which information they hold.
+
+> # Header
+the header contains the following information
 >
-> ## encrypted header
-> | Byte Offset | Length | Encrypted | Meaning |
+> | start index | length (in bytes) | added in | description |
 > | --- | --- | --- | --- |
-> | 0 | 16 | false | the iv for the header
-> | 16 | 9 | true | "goDB enc" (and trailing 00) as utf8 string |
-> | 25 | 32 | true | Master encryption key |
-> | 57 | 3 | true | Version in Format Major, Minor, Path |
-> | 60 | 2 | true | database page size in bytes (power of two between 512 and 32768)
-> | 62 | 4 | true | File change counter |
-> | 66 | 4 | true | Count of Database Pages |
-> | 70 | 4 | true | Default page cache size |
-> | 74 | 4 | true | page index of first table_schema |
-> | 78 | 4 | true | page index of first empty_pages_list |
-> | 82 | 4 | true | page index of first table_list |
-> | 86 | 42 | true | Reserved for future use |
+> | 0 | 5 | v1 | the file description (being "goDB" followed by a trailing 00) |
+> | 5 | 3 | v1 | Version in Format Major, Minor, Patch |
+> | 8 | 2 | v1 | the size of a single database page, needs to be at least 10 (which represents 1024 byte page size) |
+> | 10 | 4 | v1 | count of database pages |
+> | 14 | 4 | v1 | page index of first table_list page |
+> | 18 | 4 | v1 | page index of first empty_pages_list |
+> | 22 | 49 | / | reserved for future use |
+> | 71 | 57 | / | unusable to keep the header at 128bytes when using encryption |
+>
+> ## encryption of header
+> When using encryption the beginning of the regular [Header](#header) gets changed up. It now includes a __new file description__, the __iv used to encrypted the master encryption key__ with the users password as well as the __encrypted master encryption key__. The prefix can be seen in more detail in the table down below. The encrypted header is also 128 bytes long.
+>
+> **❗ It should be noted that the only thing bein dropped from the original header is the old "goDB" file description. ❗**
+>
+> | start index | length (in bytes) | added in | description |
+> | --- | --- | --- | --- |
+> | 0 | 9 | v1 | the new file description (being "goDB enc" followed by trailing 00) |
+> | 9 | 16 | v1 | the iv used to encrypt the master encryption key |
+> | 25 | 32 | v1 | encrypted Master encryption key |
+> | 57 | 71 | / | regular [Header](#header) but without the "goDB" file description |
 
-# Pages
-## table_list (id=0)
-> a page (often the first) that is referenced in the header and lists all the tables that exist:
-> ### table_list>head
-> | Byte Offset | Length | Meaning |
+> # Pages
+> Like described above the Pages are the structure holding the data itself.
+>
+> ## Page Header
+> Every Page starts with a 64 byte long page header. There is a general part which can be found in every page which may be followed by a page_type specific header.
+>
+> The general Header is composed of the following:
+>
+> | start index | length (in bytes) |  description |
 > | --- | --- | --- |
-> | 0 | 4 | page type (always 0) |
-> | 4 | 4 | index of previous page |
-> | 8 | 4 | index of next page |
-> | 12 | 4 | count of tables |
-> | 16 | 48 | reserved for future use |
+> | 0 | 1 | the type of the page [(indexes can be found below)](#types_of_pages) |
+> | 1 | 4 | the id of the previous page |
+> | 5 | 4 | the id of the next page |
+> | 9 | 2 | the first relevant byte holding data (relevant when data is overlapping one page) |
+> | 11 | 4 | AUTO_INCREMENT counter |
+> | 15 | 33 | reserved for page specific use |
+> | 48 | 16 | unusable to keep the page header at 64 bytes when using encryption |
 >
-> ### table_list>body
-> for each table in the list:
+> ## Encryption of Pages
+> Encryption of a page is not optional. If the file description is "goDB enc" all pages are encrypted.
 >
-> | Byte Offset | Length | Meaning |
+> When encrypting a page the first 16 bytes are sacrificed for the iv. Like with the file header the original data gets shifted back to account fir this.  
+> **A new iv gets used every time the page gets written to the file.** Besides this the structure of the page stays the same.
+>
+> ## Types of pages
+> At the moment 4 types of pages are implemented:
+>
+> * [table_list](#table_list_page) **(type=0)** to hold a list of all database tables. It's first page is referenced in the [Header](#header).
+> * [table_schema](#table_schema_page) **(type=1)** to hold the information about the columns of a table. It's first page is referenced in the [table_list](#table_list_page).
+> * [empty_pages_list](#empty_pages_page) **(type=2)** to hold a list of empty pages that became free to use after deletion. It's first page is also referenced in the [Header](#header).
+> * [table_rows](#table_rows_page) **(type=3)** to hold the data of a table. It's first page is referenced in the [table_list](#table_list).
+>
+> ### Table list page
+> The table_list is a page with **type=0** that holds information on which tables exist.
+>
+> **table_list extends the header with a 4 byte "table_count" variable telling us how many tables to expect to find**
+>
+> Content, repeated for every table:
+>
+> | start index | length (in bytes) | description |
 > | --- | --- | --- |
-> | k | 4 | index of table |
-> | k+4 | 4 | index of next table entry |
-> | k+8 | 4 | page index of table_schema page |
-> | k+12 | 4 | page index of first content page |
-> | k+16 | 4 | row count |
-> | k+20 | 4 | length of table name |
-> | k+24 | n | table name (as utf8) |
-## table_schema (id=1)
-> a page (often the first) that is referenced in the header and list all the tables that exist:
-> ### table_schema>head
-> | Byte Offset | Length | Meaning |
+> | 0 | 4 | entry length |
+> | 4 | 4 | table uid |
+> | 8 | 4 | page index of first table_schema page |
+> | 12 | 4 | page index of first table_rows page |
+> | 16 | 4 | row count |
+> | 20 | 4 | column count |
+> | 24 | 2 | table name length |
+> | 26 | n | table name (utf8) |
+>
+> ### Table schema page
+> The table_schema is a page with **type=1** that holds information on how a single table is build
+>
+> **table_schema extends the header with a 4 byte "table_uid" variable referencing the data in the table_list page**
+>
+> Content, repeated for every column:
+>
+> | start index | length (in bytes) | description |
 > | --- | --- | --- |
-> | 0 | 4 | page type (always 1) |
-> | 4 | 4 | index of previous page |
-> | 8 | 4 | index of next page |
-> | 12 | 4 | count of columns |
-> | 16 | 48 | reserved for future use |
+> | 0 | 4 | entry length |
+> | 4 | 4 | column uid |
+> | 8 | 1 | columns [data type](#column_data_type) |
+> | 9 | 1 | columns [flags](#column_flags) |
+> | 10 | 2 | column name size |
+> | 12 | n | column name (utf8) |
 >
-> ### table_schema>body
-> for each table in the list:
+> ### Empty pages page
+> The empty_Pages is a page with **type=2** that holds information on tables that where free'ed up.
 >
-> | Byte Offset | Length | Meaning |
+> The content is a simple list of 4 byte long page indexes. No other informations are provided / saved.
+>
+> ### Table rows page
+> The table_rows is a page with **type=3** that holds the data belonging inside the table / column structure.
+>
+> **table_rows extends the header with a 4 byte "table_uid" variable referencing the data in the table_list page**
+>
+> Content, for each row of Data:
+>
+> | start index | length (in bytes) | description |
 > | --- | --- | --- |
-> | k | 4 | index of column |
-> | k+4 | 4 | index of next column |
-> | k+8 | 1 | columns data type (check [#column_type](#column_type) for more information) |
-> | k+9 | 1 | column flags [UNIQUE, NOT_NULL, AUTO_INCREMENT, PRIMARY_KEY, reserved, reserved, reserved, reserved] |
-> | k+10 | 4 | column name size |
-> | k+14 | n | column name (as utf8) |
-## empty_pages_list (id=2)
-> a page that lists all empty / unused pages
-> ### empty_pages_list>head
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | 0 | 4 | page type (always 2) |
-> | 4 | 4 | index of previous page |
-> | 8 | 4 | index of next page |
-> | 12 | 52 | reserved for future use |
+> | 0 | 4 | entry length |
+> | 4 | 4 | row uid |
+> | 8 | n | concat of all column_data |
 >
-> ### empty_pages_list>body
-> for each page in the list:
->
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | k | 4 | index of empty page |
-## content (id=3)
-> a page with content of a table
-> ### content>head
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | 0 | 4 | page type (always 3) |
-> | 4 | 4 | index of previous page |
-> | 8 | 4 | index of next page |
-> | 12 | 4 | index of the first row (if starting with data that didn't fit previous page) |
-> | 16 | 48 | reserved for future use |
->
-> ### content>body
-> start of a row
->
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | k | 4 | index of row |
-> | k+4 | 4 | index of next row |
->
-> for each column:
->
-> | Byte Offset | Length | Meaning |
-> | --- | --- | --- |
-> | 0 | 1 | bool: isNull |
-> | 1 | 4 | optional: content_length |
-> | 5 | n | content |
+> The **column_data** is a very basic construct of:
+> * 1 optional isNull byte (depends on the nullable column flag)
+> * 4 optional content_length bytes (depends on the column data type)
+> * the content bytes itself
 
-# Methods
-* SELECT
-* INSERT
-* UPDATE
-* DELETE
-
-# column_type
+> # Column Data Type
 > | Value | Type |
 > | --- | --- |
 > | 0 | UINT_8 |
@@ -143,5 +149,21 @@ the first 128 bytes of the database file, including basic information (and encry
 > | 8 | DATE |
 > | 9 | UTF8_STRING |
 > | 10 | BOOLEAN |
-> | 11 | FLOAT/NUMBER/REAL |
-> | 12 | BLOB |
+> | 11 | ? FLOAT/NUMBER/REAL |
+> | 12 | ? BLOB |
+> | 13-255 | reserved for future use |
+
+> # Column Flags
+> | Bit | Type |
+> | --- | --- |
+> | 0 | UNIQUE |
+> | 1 | NOT_NULL |
+> | 2 | AUTO_INCREMENT |
+> | 3 | PRIMARY_KEY |
+> | 4-7 | reserved for future use |
+
+> # Future
+> * might add a "file change counter" field to header
+> * might add a "default page cache size" field to header
+> * should look into for thread-safety / multi threading capability
+> * atm when data is deleted it has to read the next page to move some data forward - not sure whether that's the best way 🤔
