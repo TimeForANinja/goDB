@@ -31,8 +31,8 @@ the header contains the following information
 > | 10 | 4 | v1 | count of database pages |
 > | 14 | 4 | v1 | page index of first table_list page |
 > | 18 | 4 | v1 | page index of first empty_pages_list |
-> | 22 | 49 | / | reserved for future use |
-> | 71 | 57 | / | unusable to keep the header at 128bytes when using encryption |
+> | 22 | 50 | / | reserved for future use |
+> | 72 | 56 | / | unusable to keep the header at 128bytes when using encryption |
 >
 > ## encryption of header
 > When using encryption the beginning of the regular [Header](#header) gets changed up. It now includes a __new file description__, the __iv used to encrypted the master encryption key__ with the users password as well as the __encrypted master encryption key__. The prefix can be seen in more detail in the table down below. The encrypted header is also 128 bytes long.
@@ -44,7 +44,8 @@ the header contains the following information
 > | 0 | 9 | v1 | the new file description (being "goDB enc" followed by trailing 00) |
 > | 9 | 16 | v1 | the iv used to encrypt the master encryption key |
 > | 25 | 32 | v1 | encrypted Master encryption key |
-> | 57 | 71 | / | regular [Header](#header) but without the "goDB" file description |
+> | 57 | 4 | v1 | "true" encoded as utf8 to validate master encryption key was decrypted correct |
+> | 61 | 72 | / | regular [Header](#header) but without the "goDB" file description |
 
 > # Pages
 > Like described above the Pages are the structure holding the data itself.
