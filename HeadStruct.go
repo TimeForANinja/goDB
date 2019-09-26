@@ -110,3 +110,20 @@ func deserializeHead(data []byte, userPW []byte) (*head, error) {
 	head.masterKey = masterKey
 	return head, nil
 }
+
+func newBlankHead(useEncryption bool) (*head, error) {
+	head := head{useEncryption: useEncryption}
+	var err error
+	if useEncryption {
+		head.masterKey, err = util.RandomIV(32)
+		if err != nil {
+			return nil, err
+		}
+	}
+	head.version = util.NewVersion(MAJOR, MINOR, PATCH)
+	head.pageSize = DEFAULT_PAGE_SIZE
+	head.pageCount = 0
+	head.tableListLocation = 0
+	head.emptyPagesListLocation = 0
+	return &head, nil
+}
