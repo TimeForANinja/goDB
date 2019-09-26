@@ -29,12 +29,12 @@ func RandomIV(size int) ([]byte, error) {
 }
 
 // NewEncryptCFB aes encrypts bytes and returns the cipher followed by a new iv
-func NewEncryptCFB(plaintext, passphrase []byte) ([]byte, []byte, error) {
+func NewEncryptCFB(plaintext, encKey []byte, hashEncKey bool) ([]byte, []byte, error) {
 	iv, err := RandomIV(16)
 	if err != nil {
 		return nil, nil, err
 	}
-	cipher, err := EncryptCFB(plaintext, iv, passphrase)
+	cipher, err := EncryptCFB(plaintext, iv, encKey, hashEncKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -42,8 +42,14 @@ func NewEncryptCFB(plaintext, passphrase []byte) ([]byte, []byte, error) {
 }
 
 // EncryptCFB aes encrypts bytes using a predefined iv
-func EncryptCFB(plaintext, iv, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+func EncryptCFB(plaintext, iv, encKey []byte, hashEncKey bool) ([]byte, error) {
+	var block cipher.Block
+	var err error
+	if hashEncKey {
+		block, err = aes.NewCipher(Hash(encKey, iv))
+	} else {
+		block, err = aes.NewCipher(encKey)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +60,18 @@ func EncryptCFB(plaintext, iv, key []byte) ([]byte, error) {
 }
 
 // DecryptCFB aes decrypts a cipher when provided with key and iv
-func DecryptCFB(ciphertext, iv, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
+func DecryptCFB(ciphertext, iv, encKey []byte, hashEncKey bool) ([]byte, error) {
+	var block cipher.Block
+	var err error
+	if hashEncKey {
+		block, err = aes.NewCipher(Hash(encKey, iv))
+	} else {
+		block, err = aes.NewCipher(encKey)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	stream := cipher.NewCFBDecrypter(block, iv)
 	plaintext := make([]byte, len(ciphertext))
 	stream.XORKeyStream(plaintext, ciphertext)

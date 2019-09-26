@@ -7,57 +7,58 @@ import (
 )
 
 func TestEncHead(t *testing.T) {
-	key, _ := util.RandomIV(32)
-	h := head{
-		UseEncryption:          true,
-		MasterPassword:         key,
-		Version:                util.NewVersion(2, 3, 4),
-		PageSize:               2048,
-		PageCount:              420,
-		TableListLocation:      69,
-		EmptyPagesListLocation: 1337,
+	testKey, _ := util.RandomIV(32)
+	testHead := head{
+		useEncryption:          true,
+		masterKey:              testKey,
+		version:                util.NewVersion(2, 3, 4),
+		pageSize:               2048,
+		pageCount:              420,
+		tableListLocation:      69,
+		emptyPagesListLocation: 1337,
 	}
-	userPW := util.Hash([]byte{00, 01, 02, 03}, []byte{04, 05, 06, 07})
+	testUserPassphrase := []byte{00, 01, 02, 03}
+
 	// serialize head
-	data, err := h.serializeHead(userPW)
+	testData, err := testHead.serializeHead(testUserPassphrase)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// deserialize again
-	h2, err := deserializeHead(data, userPW)
+	testHeadDecoded, err := deserializeHead(testData, testUserPassphrase)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// compare
-	if !h.equals(h2) {
-		t.Error("objects not equal", h, h2)
+	if !testHead.equals(testHeadDecoded) {
+		t.Error("objects not equal", testHead, testHeadDecoded)
 	}
 }
 
 func TestHead(t *testing.T) {
-	h := head{
-		Version:                util.NewVersion(2, 3, 4),
-		PageSize:               2048,
-		PageCount:              420,
-		TableListLocation:      69,
-		EmptyPagesListLocation: 1337,
+	testHead := head{
+		version:                util.NewVersion(2, 3, 4),
+		pageSize:               2048,
+		pageCount:              420,
+		tableListLocation:      69,
+		emptyPagesListLocation: 1337,
 	}
 	// serialize head
-	data, err := h.serializeHead(nil)
+	testData, err := testHead.serializeHead(nil)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// deserialize again
-	h2, err := deserializeHead(data, nil)
+	testHeadDecoded, err := deserializeHead(testData, nil)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// compare
-	if !h.equals(h2) {
-		t.Error("objects not equal", h, h2)
+	if !testHead.equals(testHeadDecoded) {
+		t.Error("objects not equal", testHead, testHeadDecoded)
 	}
 }

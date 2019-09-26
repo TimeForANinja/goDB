@@ -8,100 +8,105 @@ import (
 )
 
 type head struct {
-	UseEncryption          bool
-	MasterPassword         []byte
-	Version                util.Version
-	PageSize               uint16
-	PageCount              uint32
-	TableListLocation      uint32
-	EmptyPagesListLocation uint32
+	useEncryption          bool
+	masterKey              []byte
+	version                util.Version
+	pageSize               uint16
+	pageCount              uint32
+	tableListLocation      uint32
+	emptyPagesListLocation uint32
 }
 
 func (h *head) equals(h2 *head) bool {
-	return h.UseEncryption == h2.UseEncryption &&
-		bytes.Equal(h.MasterPassword, h2.MasterPassword) &&
-		h.Version.Equals(h2.Version) &&
-		h.PageSize == h2.PageSize &&
-		h.PageCount == h2.PageCount &&
-		h.TableListLocation == h2.TableListLocation &&
-		h.EmptyPagesListLocation == h2.EmptyPagesListLocation
+	return h.useEncryption == h2.useEncryption &&
+		bytes.Equal(h.masterKey, h2.masterKey) &&
+		h.version.Equals(h2.version) &&
+		h.pageSize == h2.pageSize &&
+		h.pageCount == h2.pageCount &&
+		h.tableListLocation == h2.tableListLocation &&
+		h.emptyPagesListLocation == h2.emptyPagesListLocation
 }
 
 func (h *head) serializeHeadCore() []byte {
 	resp := make([]byte, 17)
-	copy(resp[:3], h.Version.ToBytes())
-	copy(resp[3:5], util.Uint16toBytes(h.PageSize))
-	copy(resp[5:9], util.Uint32toBytes(h.PageCount))
-	copy(resp[9:13], util.Uint32toBytes(h.TableListLocation))
-	copy(resp[13:17], util.Uint32toBytes(h.EmptyPagesListLocation))
+	copy(resp[:3], h.version.ToBytes())
+	copy(resp[3:5], util.Uint16toBytes(h.pageSize))
+	copy(resp[5:9], util.Uint32toBytes(h.pageCount))
+	copy(resp[9:13], util.Uint32toBytes(h.tableListLocation))
+	copy(resp[13:17], util.Uint32toBytes(h.emptyPagesListLocation))
 	return resp
 }
 
 func deserializeHeadCore(data []byte) *head {
 	h := head{}
-	h.Version = util.NewVersionFromBytes(data[0:3])
-	h.PageSize = util.BytesToUInt16(data[3:5])
-	h.PageCount = util.BytesToUInt32(data[5:9])
-	h.TableListLocation = util.BytesToUInt32(data[9:13])
-	h.EmptyPagesListLocation = util.BytesToUInt32(data[13:17])
+	h.version = util.NewVersionFromBytes(data[0:3])
+	h.pageSize = util.BytesToUInt16(data[3:5])
+	h.pageCount = util.BytesToUInt32(data[5:9])
+	h.tableListLocation = util.BytesToUInt32(data[9:13])
+	h.emptyPagesListLocation = util.BytesToUInt32(data[13:17])
 	return &h
 }
 
 func (h *head) serializeHead(userPW []byte) ([]byte, error) {
-	c := h.serializeHeadCore()
-	head := make([]byte, 128)
-	if !h.UseEncryption {
-		copy(head[:5], []byte{103, 111, 68, 66, 00})
-		copy(head[5:], c)
-		return head, nil
+	serializedHead := h.serializeHeadCore()
+	fileHeader := make([]byte, 128)
+	if !h.useEncryption {
+		copy(fileHeader[:5], []byte{103, 111, 68, 66, 00})
+		copy(fileHeader[5:], serializedHead)
+		return fileHeader, nil
 	}
-	copy(head[:9], []byte{103, 111, 68, 66, 32, 101, 110, 99, 00})
-	masterKey, iv, err := util.NewEncryptCFB(h.MasterPassword, userPW)
+
+	copy(fileHeader[:9], []byte{103, 111, 68, 66, 32, 101, 110, 99, 00})
+	encMasterKey, iv, err := util.NewEncryptCFB(h.masterKey, userPW, true)
 	if err != nil {
 		return nil, err
 	}
-	copy(head[9:25], iv)
-	copy(head[25:57], masterKey)
-	testString, err := util.EncryptCFB(util.StringtoBytes("true"), iv, h.MasterPassword)
+	copy(fileHeader[9:25], iv)
+	copy(fileHeader[25:57], encMasterKey)
+	testString, err := util.EncryptCFB([]byte{116, 114, 117, 101}, iv, h.masterKey, false)
 	if err != nil {
 		return nil, err
 	}
-	copy(head[57:61], testString)
-	encData, err := util.EncryptCFB(c, iv, h.MasterPassword)
+	copy(fileHeader[57:61], testString)
+	encData, err := util.EncryptCFB(serializedHead, iv, h.masterKey, false)
 	if err != nil {
 		return nil, err
 	}
-	copy(head[61:], encData)
-	return head, nil
+	copy(fileHeader[61:], encData)
+	return fileHeader, nil
 }
 
 func deserializeHead(data []byte, userPW []byte) (*head, error) {
 	if bytes.Equal(data[:5], []byte{103, 111, 68, 66, 00}) {
-		return deserializeHeadCore(data[5:]), nil
+		head := deserializeHeadCore(data[5:])
+		head.useEncryption = false
+		return head, nil
 	}
+
 	if !bytes.Equal(data[:9], []byte{103, 111, 68, 66, 32, 101, 110, 99, 00}) {
 		return nil, errors.New("unknown file type")
 	}
+
 	iv := data[9:25]
-	encKey := data[25:57]
-	validation := data[57:61]
-	key, err := util.DecryptCFB(encKey, iv, userPW)
+	encMasterKey := data[25:57]
+	encTestString := data[57:61]
+	masterKey, err := util.DecryptCFB(encMasterKey, iv, userPW, true)
 	if err != nil {
 		return nil, err
 	}
-	v, err := util.DecryptCFB(validation, iv, key)
+	testString, err := util.DecryptCFB(encTestString, iv, masterKey, false)
 	if err != nil {
 		return nil, err
 	}
-	if !bytes.Equal(v, util.StringtoBytes("true")) {
-		return nil, errors.New("failed to decode")
+	if !bytes.Equal(testString, []byte{116, 114, 117, 101}) {
+		return nil, errors.New("failed to decode test string")
 	}
-	decData, err := util.DecryptCFB(data[61:], iv, key)
+	decData, err := util.DecryptCFB(data[61:], iv, masterKey, false)
 	if err != nil {
 		return nil, err
 	}
 	head := deserializeHeadCore(decData)
-	head.UseEncryption = true
-	head.MasterPassword = key
+	head.useEncryption = true
+	head.masterKey = masterKey
 	return head, nil
 }

@@ -8,13 +8,13 @@ import (
 
 type database struct {
 	//	fileinfo      fileInfo
-	file       *os.File
-	passphrase string
-	head       *head
+	file           *os.File
+	useEncryption  bool
+	userPassphrase []byte // the string
 }
 
 func (db database) writeHead(h *head) error {
-	c, err := h.serializeHead(util.StringtoBytes(db.passphrase))
+	c, err := h.serializeHead(db.userPassphrase)
 	if err != nil {
 		return err
 	}
@@ -25,17 +25,19 @@ func (db database) writeHead(h *head) error {
 func (db database) readHead() (*head, error) {
 	data := make([]byte, 128)
 	db.file.ReadAt(data, 0)
-	return deserializeHead(data, util.StringtoBytes(db.passphrase))
+	return deserializeHead(data, db.userPassphrase)
 }
 
 // NewDB is the factory for a new database
 func NewDB() *database {
-	return nil
+	db := database{useEncryption: false}
+	return &db
 }
-func NewEncDB(userPW string, iv []byte) *database {
-	userSecret := util.Hash(util.StringtoBytes(userPW), iv)
-	userSecret[0] = userSecret[0]
-	return nil
+
+// NewEncDB is the factory for a new encrypted database
+func NewEncDB(passphrase string) *database {
+	db := database{useEncryption: true, userPassphrase: util.StringtoBytes(passphrase)}
+	return &db
 }
 
 func main() {}
