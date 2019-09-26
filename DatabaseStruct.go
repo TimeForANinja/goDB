@@ -1,4 +1,4 @@
-package main
+package goDB
 
 import (
 	"os"
@@ -39,5 +39,3 @@ func NewEncDB(passphrase string) *database {
 	db := database{useEncryption: true, userPassphrase: util.StringtoBytes(passphrase)}
 	return &db
 }
-
-func main() {}
