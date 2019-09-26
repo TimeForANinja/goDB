@@ -2,17 +2,19 @@ package main
 
 import (
 	"os"
+
+	util "github.com/timeforaninja/goDB/utility"
 )
 
-type Database struct {
+type database struct {
 	//	fileinfo      fileInfo
 	file       *os.File
 	passphrase string
-	head       *Head
+	head       *head
 }
 
-func (db Database) writeHead(h *Head) error {
-	c, err := h.SerializeHead(stringtoBytes(db.passphrase))
+func (db database) writeHead(h *head) error {
+	c, err := h.serializeHead(util.StringtoBytes(db.passphrase))
 	if err != nil {
 		return err
 	}
@@ -20,10 +22,20 @@ func (db Database) writeHead(h *Head) error {
 	return nil
 }
 
-func (db Database) readHead() (*Head, error) {
+func (db database) readHead() (*head, error) {
 	data := make([]byte, 128)
 	db.file.ReadAt(data, 0)
-	return DeserializeHead(data, stringtoBytes(db.passphrase))
+	return deserializeHead(data, util.StringtoBytes(db.passphrase))
+}
+
+// NewDB is the factory for a new database
+func NewDB() *database {
+	return nil
+}
+func NewEncDB(userPW string, iv []byte) *database {
+	userSecret := util.Hash(util.StringtoBytes(userPW), iv)
+	userSecret[0] = userSecret[0]
+	return nil
 }
 
 func main() {}
