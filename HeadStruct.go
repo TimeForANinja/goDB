@@ -87,6 +87,10 @@ func deserializeHead(data []byte, userPW []byte) (*head, error) {
 		return nil, errors.New("unknown file type")
 	}
 
+	if userPW == nil {
+		return nil, errors.New("no pw for encrypted file provided")
+	}
+
 	iv := data[9:25]
 	encMasterKey := data[25:57]
 	encTestString := data[57:61]
