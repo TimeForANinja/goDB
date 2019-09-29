@@ -62,6 +62,10 @@ func (db *database) newFile(filename string) error {
 	return err
 }
 
+func (db *database) Vacuum() {
+	// TODO: clean up the database
+}
+
 // NewDB is the factory for a new database
 func NewDB() *database {
 	db := database{useEncryption: false}
