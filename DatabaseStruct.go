@@ -13,7 +13,7 @@ type database struct {
 	head           *head
 }
 
-func (db database) writeHead(h *head) error {
+func (db *database) writeHead(h *head) error {
 	c, err := h.serializeHead(db.userPassphrase)
 	if err != nil {
 		return err
@@ -22,13 +22,13 @@ func (db database) writeHead(h *head) error {
 	return nil
 }
 
-func (db database) readHead() (*head, error) {
+func (db *database) readHead() (*head, error) {
 	data := make([]byte, 128)
 	db.file.ReadAt(data, 0)
 	return deserializeHead(data, db.userPassphrase)
 }
 
-func (db database) Open(filename string) error {
+func (db *database) Open(filename string) error {
 	stat, err := os.Stat(filename)
 	if os.IsNotExist(err) {
 		return db.newFile(filename)
@@ -48,7 +48,7 @@ func (db database) Open(filename string) error {
 	return err
 }
 
-func (db database) newFile(filename string) error {
+func (db *database) newFile(filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
