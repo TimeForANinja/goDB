@@ -77,7 +77,7 @@ func (h *head) serializeHead(userPW []byte) ([]byte, error) {
 }
 
 func deserializeHead(data []byte, userPW []byte) (*head, error) {
-	if bytes.Equal(data[:5], []byte{103, 111, 68, 66, 00}) {
+	if userPW == nil && bytes.Equal(data[:5], []byte{103, 111, 68, 66, 00}) {
 		head := deserializeHeadCore(data[5:])
 		head.useEncryption = false
 		return head, nil
