@@ -40,15 +40,15 @@ func BytesToString(bytes []byte) string {
 	return string(bytes)
 }
 
-/* func Int16toBytes(num int16) []byte {
+/* int conversion
+func Int16toBytes(num int16) []byte {
 	return []byte{
 		byte(uint >> 8),
 		byte(uint & 255),
 	}
 }
-*/
 
-/* func Int32toBytes(num int32) []byte {
+func Int32toBytes(num int32) []byte {
 	return []byte{
 		byte((int >> 24) & 255),
 		byte((int >> 16) & 255),
@@ -56,14 +56,12 @@ func BytesToString(bytes []byte) string {
 		byte(int & 255),
 	}
 }
-*/
 
-/* func BytesToInt16(bytes []byte) int16 {
+func BytesToInt16(bytes []byte) int16 {
 	return (uint16(bytes[0]) << 8) + uint16(bytes[1])
 }
-*/
 
-/* func BytesToInt32(bytes []byte) int32 {
+func BytesToInt32(bytes []byte) int32 {
 	return (uint32(bytes[2]) << 24) + (uint32(bytes[2]) << 16) + (uint32(bytes[2]) << 8) + uint32(bytes[3])
 }
 */
