@@ -61,8 +61,8 @@ the header contains the following information
 > | 1 | 4 | v1 | the id of the previous page |
 > | 5 | 4 | v1 | the id of the next page |
 > | 9 | 2 | v1 | the first relevant byte holding data (relevant when data is overlapping one page) |
-> | 11 | 4 | v1 | AUTO_INCREMENT counter |
-> | 15 | 33 | / | reserved for page specific use |
+> | 11 | 2 | v1 | number of bytes that are trimmed of the end to make deletion/editing possible |
+> | 13 | 35 | / | reserved for page specific use |
 > | 48 | 16 | / | unusable to keep the page header at 64 bytes when using encryption |
 >
 > ## Encryption of Pages
@@ -92,10 +92,11 @@ the header contains the following information
 > | 4 | 4 | v1 | table uid |
 > | 8 | 4 | v1 | page index of first table_schema page |
 > | 12 | 4 | v1 | page index of first table_rows page |
-> | 16 | 4 | v1 | row count |
-> | 20 | 4 | v1 | column count |
-> | 24 | 2 | v1 | table name length |
-> | 26 | n | v1 | table name (utf8) |
+> | 16 | 4 | v1 | page index of last table_rows page |
+> | 20 | 4 | v1 | row count |
+> | 24 | 4 | v1 | column count |
+> | 28 | 2 | v1 | table name length |
+> | 30 | n | v1 | table name (utf8) |
 >
 > ### Table schema page
 > The table_schema is a page with **type=1** that holds information on how a single table is build
@@ -110,8 +111,9 @@ the header contains the following information
 > | 4 | 4 | v1 | column uid |
 > | 8 | 1 | v1 | columns [data type](#column-data-type) |
 > | 9 | 1 | v1 | columns [flags](#column-flags) |
-> | 10 | 2 | v1 | column name size |
-> | 12 | n | v1 | column name (utf8) |
+> | 10 | 4 | v1 | AUTO_INCREMENT value for the given column |
+> | 14 | 2 | v1 | column name size |
+> | 16 | n | v1 | column name (utf8) |
 >
 > ### Empty pages page
 > The empty_Pages is a page with **type=2** that holds information on tables that where free'ed up.
