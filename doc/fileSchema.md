@@ -118,7 +118,8 @@
 > ### Empty pages page
 > The empty_Pages is a page with **type=2** that holds information on tables that where free'ed up.
 >
-> The content is a simple list of 4 byte long page indexes. No other informations are provided / saved.
+> The content is a simple list of 4 byte long page indexes. No other informations are provided / saved.  
+> **This is the only occasion where data is not being split, the last (max 3) bytes are rather put into the endTrim page variable and it continues on the next page the regular way**
 >
 > ### Table rows page
 > The table_rows is a page with **type=3** that holds the data belonging inside the table / column structure.
