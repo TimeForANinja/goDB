@@ -21,7 +21,7 @@
 > 2. Repeating blocks of a fixed size (defaults to 4096 bytes) called the [Pages](#pages). There are different types of pages defining which information they hold.
 
 > # Header
-the header contains the following information
+> the header contains the following information
 >
 > | start index | length (in bytes) | added in | description |
 > | --- | --- | --- | --- |
