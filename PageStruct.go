@@ -32,6 +32,16 @@ func ReadPage(db *database, pageNum uint32) (*page, error) {
 	return &page{pageNum, pageHead, data}, nil
 }
 
+func (page *page) WritePage(db *database) error {
+	data, err := page.serializePage(db.head.pageSize, db.useEncryption, db.head.masterKey)
+	if err != nil {
+		return err
+	}
+	pageStart := 128 + ((int64(page.index) - 1) * int64(db.head.pageSize))
+	_, err = db.file.WriteAt(data, pageStart)
+	return err
+}
+
 func deserializePage(data []byte, encrypted bool, masterKey []byte) (*pageHead, []byte, error) {
 	if !encrypted {
 		return deserializePageHeadCore(data[:48]), data[64:], nil
