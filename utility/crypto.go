@@ -22,7 +22,8 @@ func Hash(data, salt []byte) []byte {
 // RandomIV returns <size> random bytes
 func RandomIV(size int) ([]byte, error) {
 	nonce := make([]byte, size)
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
+	_, err := io.ReadFull(rand.Reader, nonce)
+	if err != nil {
 		return nil, err
 	}
 	return nonce, nil
