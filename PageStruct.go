@@ -4,6 +4,18 @@ import (
 	util "github.com/timeforaninja/goDB/utility"
 )
 
+// TypeTableList holds the id of a table_List page
+const TypeTableList = 0
+
+// TypeTableSchema holds the id of a table_schema page
+const TypeTableSchema = 1
+
+// TypeEmptyPagesList holds the id of a empty_pages_list page
+const TypeEmptyPagesList = 2
+
+// TypeTableRows holds the id of a table_rows page
+const TypeTableRows = 3
+
 type page struct {
 	index    uint32
 	pageHead *pageHead
