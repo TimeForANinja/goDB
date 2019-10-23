@@ -25,6 +25,9 @@ func TestEncHead(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	if len(testData) != 128 {
+		t.Error("testData invalid length", testData, 128)
+	}
 	// deserialize again
 	testHeadDecoded, err := deserializeHead(testData, testUserPassphrase)
 	if err != nil {
@@ -50,6 +53,9 @@ func TestHead(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 		return
+	}
+	if len(testData) != 128 {
+		t.Error("testData invalid length", testData, 128)
 	}
 	// deserialize again
 	testHeadDecoded, err := deserializeHead(testData, nil)

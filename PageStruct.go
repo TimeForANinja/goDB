@@ -1,6 +1,8 @@
 package goDB
 
 import (
+	"bytes"
+
 	util "github.com/timeforaninja/goDB/utility"
 )
 
@@ -22,6 +24,12 @@ type page struct {
 	data     []byte
 }
 
+func (p *page) equals(p2 *page) bool {
+	return bytes.Equal(p.data, p2.data) &&
+		p.index == p2.index &&
+		p.pageHead.equals(p2.pageHead)
+}
+
 type pageHead struct {
 	pageType     uint8
 	nextPage     uint32
@@ -29,6 +37,15 @@ type pageHead struct {
 	firstItem    uint16
 	endTrim      uint16
 	pageSpezific []byte
+}
+
+func (p *pageHead) equals(p2 *pageHead) bool {
+	return p.pageType == p2.pageType &&
+		p.nextPage == p2.nextPage &&
+		p.prevPage == p2.prevPage &&
+		p.firstItem == p2.firstItem &&
+		p.endTrim == p2.endTrim &&
+		bytes.Equal(p.pageSpezific, p2.pageSpezific)
 }
 
 func ReadPage(db *database, pageNum uint32) (*page, error) {
