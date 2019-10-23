@@ -1,11 +1,5 @@
 package goDB
 
-type row struct {
-	entryUID uint32
-	rowUID   uint32
-	data     []columnData
-}
-
 type columnData struct {
 	isNull        bool
 	contentLength uint32
@@ -13,13 +7,24 @@ type columnData struct {
 	content       []byte
 }
 
+type row struct {
+	entryUID uint32
+	rowUID   uint32
+	data     []columnData
+}
+
 type tableRows struct {
-	page *page
-	rows []*row
+	page         *page
+	rows         []*row
+	overFlowData []byte
 }
 
 func (page *page) parseAsTableRows(tableSchema *table) *tableRows {
 	rows := make([]*row, 0)
+	if page.pageHead.firstItem == 0 {
+		return &tableRows{page: page, rows: rows, overFlowData: page.data[page.pageHead.firstItem : len(page.data)-page.pageHead.endTrim]}
+	}
+	firstRow := page.pageHead.firstItem
 	return &tableRows{page: page, rows: rows}
 }
 
