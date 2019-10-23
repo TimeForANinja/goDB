@@ -28,6 +28,22 @@ func (db *database) readHead() (*head, error) {
 	return deserializeHead(data, db.userPassphrase)
 }
 
+func (db *database) getPageBytes(pageNum uint32) ([]byte, error) {
+	pageBuffer := make([]byte, db.head.pageSize)
+	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.head.pageSize))
+	_, err := db.file.ReadAt(pageBuffer, pageStart)
+	if err != nil {
+		return nil, err
+	}
+	return pageBuffer, nil
+}
+
+func (db *database) writePageBytes(pageNum uint32, data []byte) error {
+	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.head.pageSize))
+	_, err := db.file.WriteAt(data, pageStart)
+	return err
+}
+
 func (db *database) Open(filename string) error {
 	stat, err := os.Stat(filename)
 	if os.IsNotExist(err) {

@@ -49,7 +49,7 @@ func (p *pageHead) equals(p2 *pageHead) bool {
 }
 
 func ReadPage(db *database, pageNum uint32) (*page, error) {
-	buffer, err := getPageBytes(db, pageNum)
+	buffer, err := db.getPageBytes(pageNum)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +66,7 @@ func (page *page) WritePage(db *database) error {
 	if err != nil {
 		return err
 	}
-	pageStart := 128 + ((int64(page.index) - 1) * int64(db.head.pageSize))
-	_, err = db.file.WriteAt(data, pageStart)
-	return err
+	return db.writePageBytes(page.index, data)
 }
 
 func deserializePage(data []byte, encrypted bool, masterKey []byte) (*pageHead, []byte, error) {
@@ -135,19 +133,13 @@ func (head *pageHead) serializePageHeadCore() []byte {
 	return data
 }
 
-func getPageBytes(db *database, pageNum uint32) ([]byte, error) {
-	pageBuffer := make([]byte, db.head.pageSize)
-	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.head.pageSize))
-	_, err := db.file.ReadAt(pageBuffer, pageStart)
-	if err != nil {
-		return nil, err
+func NewPage(db *database, head *pageHead) *page {
+	p := page{
+		index:    db.head.pageCount + 1,
+		pageHead: head,
+		data:     make([]byte, db.head.pageSize-64),
 	}
-	return pageBuffer, nil
-}
-
-func NewPage(db *database) *page {
-	p := page{index: db.head.pageCount + 1, data: make([]byte, db.head.pageSize-64)}
-	db.head.pageCount++
+	db.head.pageCount += 1
 	db.writeHead(db.head)
 	return &p
 }
