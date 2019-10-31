@@ -18,19 +18,27 @@ func (v Version) Equals(v2 Version) bool {
 
 // ToBytes returns the Version as byte array
 func (v Version) ToBytes() []byte {
-	return []byte{v.Major, v.Minor, v.Patch}
+	return []byte{
+		v.Major,
+		v.Minor,
+		v.Patch,
+	}
 }
 
 // NewVersionFromBytes takes at (3) byte array to create a new Version
 func NewVersionFromBytes(data []byte) Version {
-	v := Version{}
-	v.Major = data[0]
-	v.Minor = data[1]
-	v.Patch = data[2]
-	return v
+	return Version{
+		Major: data[0],
+		Minor: data[1],
+		Patch: data[2],
+	}
 }
 
 // NewVersion takes 3 uint8's to create a new Version
 func NewVersion(major, minor, patch uint8) Version {
-	return Version{major, minor, patch}
+	return Version{
+		major,
+		minor,
+		patch,
+	}
 }
