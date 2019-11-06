@@ -19,6 +19,7 @@ const TypeEmptyPagesList = 2
 const TypeTableRows = 3
 
 type page struct {
+	db       *database
 	index    uint32
 	pageHead *pageHead
 	data     []byte
@@ -31,6 +32,7 @@ func (p *page) equals(p2 *page) bool {
 }
 
 type pageHead struct {
+	page         *page
 	pageType     uint8
 	nextPage     uint32
 	prevPage     uint32
@@ -58,7 +60,9 @@ func ReadPage(db *database, pageNum uint32) (*page, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &page{pageNum, pageHead, data}, nil
+	start := pageHead.firstItem
+	last := db.head.pageSize - pageHead.endTrim
+	return &page{db, pageNum, pageHead, data[start : last-start]}, nil
 }
 
 func (page *page) WritePage(db *database) error {
@@ -135,6 +139,7 @@ func (head *pageHead) serializePageHeadCore() []byte {
 
 func NewPage(db *database, head *pageHead) *page {
 	p := page{
+		db:       db,
 		index:    db.head.pageCount + 1,
 		pageHead: head,
 		data:     make([]byte, db.head.pageSize-64),
