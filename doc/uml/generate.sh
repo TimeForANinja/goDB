@@ -9,5 +9,9 @@ dir="$(go env GOPATH)/src/github.com/jfeliu007/goplantuml"
 go run $dir/cmd/goplantuml/main.go \
 -ignore ../../unused -ignore ../../experimental \
 -recursive \
--show-aggregations -show-aliases -show-compositions -show-connection-labels -show-implementations \
+-show-aggregations \
+-show-aliases \
+-show-compositions \
+-show-connection-labels \
+-show-implementations \
 ../../ | java -jar ./plantuml.jar -pipe > out.png
