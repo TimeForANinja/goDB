@@ -27,7 +27,7 @@ install:
   - go env
 
 build_script:
-  - cd $GOPATH/src/github.com/timeforaninja/goDB/doc/uml/generate.sh
+  - cd $GOPATH/src/github.com/timeforaninja/goDB/doc/uml/
   - bash $GOPATH/src/github.com/timeforaninja/goDB/doc/uml/generate.sh
   - ls -lahR $GOPATH/src/github.com/timeforaninja/goDB
 
