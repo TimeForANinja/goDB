@@ -30,7 +30,7 @@ const parseDir = async (rootDir, workDir = "") => {
     throw Error(`unknown types in "${PATH.resolve(rootDir, workDir)}"\nplease share "${PATH.resolve(__dirname, './unknown.json')}" to help improve this package`);
   }
   tail.push(
-    ...constants,
+    // ...constants,
     ...functions,
     ...types,
   );
@@ -92,15 +92,37 @@ const parseConstants = async (content, package, rootDir, workDir) => {
   });
   return await Promise.all(parsedConstants);
 }
-const parseFunctions = async (content, rootDir, workDir) => {
-  return [];
+const parseFunctions = async (content, package, rootDir, workDir) => {
+  if(!content) return [];
+  const constants = content.split('\n\n').slice(1);
+  const parsedConstants = constants.map(async a => {
+    const delimiter = a.indexOf('\n');
+
+    const code = a.substr(0, delimiter);
+    console.log("code", code);
+    const definition = code.match(/func\s([a-zA-Z0-9_]+)\(([a-zA-Z0-9_ ,\[\]\*]+)\)(\s[a-zA-Z0-9_ \[\]\*]+|\s\([a-zA-Z0-9_ ,\[\]\*]+\))/);
+    const { file, line } = await findFileAndLine(rootDir, workDir, code);
+
+    return {
+      package,
+      file: PATH.relative(rootDir, PATH.resolve(rootDir, workDir, file)),
+      line,
+      code,
+      exported: (/^[A-Z]/).test(definition[1]),
+      name: nullsaveTrim(definition[1]),
+      parameter: nullsaveTrim(definition[2]),
+      returnValues: nullsaveTrim(definition[3]),
+      description: nullsaveTrim(a.substr(delimiter)),
+    }
+  });
+  return await Promise.all(parsedConstants);
 }
-const parseTypes = async (content, rootDir, workDir) => {
+const parseTypes = async (content, package, rootDir, workDir) => {
   return [];
 }
 
 const findFileAndLine = async (rootDir, workDir, code) => {
-  const stdout = await execPromise(`grep -n -H "${code}" *.go`, PATH.resolve(rootDir, workDir));
+  const stdout = await execPromise(`grep -n -H "${code.replace(/\[/g, "\\[").replace(/\]/g, "\\]")}" *.go`, PATH.resolve(rootDir, workDir));
 
   const file = workDir + stdout.split(':')[0];
   const line = stdout.split(':')[1];
