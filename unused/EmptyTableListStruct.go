@@ -5,7 +5,7 @@ import (
 )
 
 type emptyTableListIterator struct {
-	db       *database
+	db       *Database
 	position *util.Position
 	currPage *page
 }
@@ -36,7 +36,7 @@ func (etli *emptyTableListIterator) hasNext() bool {
 	return true
 }
 
-func (db *database) getEmptyTableListIterator() (*emptyTableListIterator, error) {
+func (db *Database) getEmptyTableListIterator() (*emptyTableListIterator, error) {
 	page, err := ReadPage(db, db.head.emptyPagesListLocation)
 	if err != nil {
 		return nil, err
