@@ -49,7 +49,7 @@ func deserializeHeadCore(data []byte) *dbHead {
 
 func (h *dbHead) serializeHead(userPW []byte) ([]byte, error) {
 	serializedHead := h.serializeHeadCore()
-	fileHeader := make([]byte, 128)
+	fileHeader := make([]byte, DB_HEAD_SIZE)
 	if !h.useEncryption {
 		copy(fileHeader[:5], []byte{103, 111, 68, 66, 00})
 		copy(fileHeader[5:], serializedHead)
@@ -61,8 +61,8 @@ func (h *dbHead) serializeHead(userPW []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	copy(fileHeader[9:25], iv)
-	copy(fileHeader[25:57], encMasterKey)
+	copy(fileHeader[9:9+IV_SIZE], iv)
+	copy(fileHeader[9+IV_SIZE:57], encMasterKey)
 	testString, err := util.EncryptCFB([]byte{116, 114, 117, 101}, iv, h.masterKey, false)
 	if err != nil {
 		return nil, err
@@ -91,8 +91,8 @@ func deserializeHead(data []byte, userPW []byte) (*dbHead, error) {
 		return nil, errors.New("no pw for encrypted file provided")
 	}
 
-	iv := data[9:25]
-	encMasterKey := data[25:57]
+	iv := data[9 : 9+IV_SIZE]
+	encMasterKey := data[9+IV_SIZE : 57]
 	encTestString := data[57:61]
 	masterKey, err := util.DecryptCFB(encMasterKey, iv, userPW, true)
 	if err != nil {
@@ -120,7 +120,7 @@ func newBlankHead(useEncryption bool) (*dbHead, error) {
 	var err error
 	// try generating masterKey
 	if useEncryption {
-		head.masterKey, err = util.RandomIV(32)
+		head.masterKey, err = util.RandomIV(MASTER_KEY_SIZE)
 		if err != nil {
 			return nil, err
 		}

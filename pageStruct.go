@@ -24,7 +24,7 @@ func (page *page) equals(p2 *page) bool {
 
 // readPage returns a new untrimmed page read from file by its index
 func readPage(db *Database, pageNum uint32) (*page, error) {
-	if pageNum == 0 {
+	if pageNum == NULL_POINTER_PAGE {
 		return nil, errors.New("nullpointer exception")
 	}
 
@@ -51,9 +51,9 @@ func (page *page) writePage(db *Database) error {
 
 // deserializePage parses bytes of a page into a pageHead and the pageContent (handles encryption)
 func deserializePage(data []byte, encrypted bool, masterKey []byte) (*pageHead, []byte, error) {
-	headBytes := data[:48]
-	ivBytes := data[48:64]
-	dataBytes := data[64:]
+	headBytes := data[:PAGE_HEAD_SIZE-IV_SIZE]
+	ivBytes := data[PAGE_HEAD_SIZE-IV_SIZE : PAGE_HEAD_SIZE]
+	dataBytes := data[PAGE_HEAD_SIZE:]
 	if !encrypted {
 		return deserializePageHead(headBytes), dataBytes, nil
 	}
@@ -76,8 +76,8 @@ func (page *page) serializePage(pageSize uint16, encryption bool, masterKey []by
 	headBytes := page.pageHead.serializePageHead()
 
 	if !encryption {
-		copy(data[:48], headBytes)
-		copy(data[64:], page.data)
+		copy(data[:PAGE_HEAD_SIZE-IV_SIZE], headBytes)
+		copy(data[PAGE_HEAD_SIZE:], page.data)
 		return data, nil
 	}
 
@@ -89,9 +89,9 @@ func (page *page) serializePage(pageSize uint16, encryption bool, masterKey []by
 	if err != nil {
 		return nil, err
 	}
-	copy(data[:48], encHead)
-	copy(data[48:64], iv)
-	copy(data[64:], encData)
+	copy(data[:PAGE_HEAD_SIZE-IV_SIZE], encHead)
+	copy(data[PAGE_HEAD_SIZE-IV_SIZE:PAGE_HEAD_SIZE], iv)
+	copy(data[PAGE_HEAD_SIZE:], encData)
 	return data, nil
 }
 
@@ -101,7 +101,7 @@ func newPage(db *Database, pageHead *pageHead) *page {
 		db:       db,
 		index:    db.dbHead.pageCount + 1,
 		pageHead: pageHead,
-		data:     make([]byte, db.dbHead.pageSize-64),
+		data:     make([]byte, db.dbHead.pageSize-PAGE_HEAD_SIZE),
 	}
 	db.dbHead.pageCount++
 	db.writeHead()

@@ -30,7 +30,7 @@ func (db *Database) writeHead() error {
 
 // readHead reads a database head from file
 func (db *Database) readHead() (*dbHead, error) {
-	data := make([]byte, 128)
+	data := make([]byte, DB_HEAD_SIZE)
 	db.file.ReadAt(data, 0)
 	return deserializeHead(data, db.secret.userPassphrase)
 }
@@ -38,7 +38,7 @@ func (db *Database) readHead() (*dbHead, error) {
 // getPageBytes reads the pagehead and page bytes from file (doesnt handle encryption)
 func (db *Database) getPageBytes(pageNum uint32) ([]byte, error) {
 	pageBuffer := make([]byte, db.dbHead.pageSize)
-	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
+	pageStart := DB_HEAD_SIZE + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
 	_, err := db.file.ReadAt(pageBuffer, pageStart)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (db *Database) getPageBytes(pageNum uint32) ([]byte, error) {
 
 // writePageBytes writes pagehead and page bytes to file (doesnt handle encryption)
 func (db *Database) writePageBytes(pageNum uint32, data []byte) error {
-	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
+	pageStart := DB_HEAD_SIZE + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
 	_, err := db.file.WriteAt(data, pageStart)
 	return err
 }
