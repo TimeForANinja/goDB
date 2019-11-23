@@ -6,15 +6,21 @@ import (
 	util "github.com/timeforaninja/goDB/utility"
 )
 
-type database struct {
-	file           *os.File
-	useEncryption  bool
-	userPassphrase []byte // the string
-	head           *head
+// Database is the general struct you interact with
+type Database struct {
+	file          *os.File
+	useEncryption bool
+	secret        *secret
+	dbHead        *dbHead
 }
 
-func (db *database) writeHead(h *head) error {
-	c, err := h.serializeHead(db.userPassphrase)
+type secret struct {
+	userPassphrase []byte // the string
+}
+
+// writeHead writes the database head to the file
+func (db *Database) writeHead() error {
+	c, err := db.dbHead.serializeHead(db.secret.userPassphrase)
 	if err != nil {
 		return err
 	}
@@ -22,15 +28,17 @@ func (db *database) writeHead(h *head) error {
 	return nil
 }
 
-func (db *database) readHead() (*head, error) {
+// readHead reads a database head from file
+func (db *Database) readHead() (*dbHead, error) {
 	data := make([]byte, 128)
 	db.file.ReadAt(data, 0)
-	return deserializeHead(data, db.userPassphrase)
+	return deserializeHead(data, db.secret.userPassphrase)
 }
 
-func (db *database) getPageBytes(pageNum uint32) ([]byte, error) {
-	pageBuffer := make([]byte, db.head.pageSize)
-	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.head.pageSize))
+// getPageBytes reads the pagehead and page bytes from file (doesnt handle encryption)
+func (db *Database) getPageBytes(pageNum uint32) ([]byte, error) {
+	pageBuffer := make([]byte, db.dbHead.pageSize)
+	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
 	_, err := db.file.ReadAt(pageBuffer, pageStart)
 	if err != nil {
 		return nil, err
@@ -38,13 +46,15 @@ func (db *database) getPageBytes(pageNum uint32) ([]byte, error) {
 	return pageBuffer, nil
 }
 
-func (db *database) writePageBytes(pageNum uint32, data []byte) error {
-	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.head.pageSize))
+// writePageBytes writes pagehead and page bytes to file (doesnt handle encryption)
+func (db *Database) writePageBytes(pageNum uint32, data []byte) error {
+	pageStart := 128 + ((int64(pageNum) - 1) * int64(db.dbHead.pageSize))
 	_, err := db.file.WriteAt(data, pageStart)
 	return err
 }
 
-func (db *database) Open(filename string) error {
+// Open initialises a database from the provided file
+func (db *Database) Open(filename string) error {
 	stat, err := os.Stat(filename)
 	if os.IsNotExist(err) {
 		return db.newFile(filename)
@@ -60,36 +70,42 @@ func (db *database) Open(filename string) error {
 	if err != nil {
 		return err
 	}
-	db.head, err = db.readHead()
+	db.dbHead, err = db.readHead()
 	return err
 }
 
-func (db *database) newFile(filename string) error {
+// newFile is used when calling Open with a file that doesn't yet exist
+// newFile also initialises a new blank header
+func (db *Database) newFile(filename string) error {
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	db.file = file
-	db.head, err = newBlankHead(db.useEncryption)
+	db.dbHead, err = newBlankHead(db.useEncryption)
 	if err != nil {
 		return err
 	}
-	err = db.writeHead(db.head)
+	err = db.writeHead()
 	return err
 }
 
-func (db *database) Vacuum() {
+// Vacuum optimizes the database by removing mostly trim spaces and empty pages
+func (db *Database) Vacuum() {
 	// TODO: clean up the database
 }
 
 // NewDB is the factory for a new database
-func NewDB() *database {
-	db := database{useEncryption: false}
+func NewDB() *Database {
+	db := Database{useEncryption: false, secret: nil}
 	return &db
 }
 
 // NewEncDB is the factory for a new encrypted database
-func NewEncDB(passphrase string) *database {
-	db := database{useEncryption: true, userPassphrase: util.StringtoBytes(passphrase)}
+func NewEncDB(passphrase string) *Database {
+	db := Database{
+		useEncryption: true,
+		secret:        &secret{util.StringtoBytes(passphrase)},
+	}
 	return &db
 }

@@ -8,7 +8,7 @@ import (
 
 func TestEncHead(t *testing.T) {
 	testKey, _ := util.RandomIV(32)
-	testHead := head{
+	testHead := dbHead{
 		useEncryption:          true,
 		masterKey:              testKey,
 		version:                util.NewVersion(2, 3, 4),
@@ -41,7 +41,7 @@ func TestEncHead(t *testing.T) {
 }
 
 func TestHead(t *testing.T) {
-	testHead := head{
+	testHead := dbHead{
 		version:                util.NewVersion(2, 3, 4),
 		pageSize:               2048,
 		pageCount:              420,

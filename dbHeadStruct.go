@@ -7,7 +7,7 @@ import (
 	util "github.com/timeforaninja/goDB/utility"
 )
 
-type head struct {
+type dbHead struct {
 	useEncryption          bool
 	masterKey              []byte
 	version                util.Version
@@ -17,7 +17,7 @@ type head struct {
 	emptyPagesListLocation uint32
 }
 
-func (h *head) equals(h2 *head) bool {
+func (h *dbHead) equals(h2 *dbHead) bool {
 	return h.useEncryption == h2.useEncryption &&
 		bytes.Equal(h.masterKey, h2.masterKey) &&
 		h.version.Equals(h2.version) &&
@@ -27,7 +27,7 @@ func (h *head) equals(h2 *head) bool {
 		h.emptyPagesListLocation == h2.emptyPagesListLocation
 }
 
-func (h *head) serializeHeadCore() []byte {
+func (h *dbHead) serializeHeadCore() []byte {
 	resp := make([]byte, 17)
 	copy(resp[:3], h.version.ToBytes())
 	copy(resp[3:5], util.Uint16toBytes(h.pageSize))
@@ -37,8 +37,8 @@ func (h *head) serializeHeadCore() []byte {
 	return resp
 }
 
-func deserializeHeadCore(data []byte) *head {
-	h := head{}
+func deserializeHeadCore(data []byte) *dbHead {
+	h := dbHead{}
 	h.version = util.NewVersionFromBytes(data[0:3])
 	h.pageSize = util.BytesToUInt16(data[3:5])
 	h.pageCount = util.BytesToUInt32(data[5:9])
@@ -47,7 +47,7 @@ func deserializeHeadCore(data []byte) *head {
 	return &h
 }
 
-func (h *head) serializeHead(userPW []byte) ([]byte, error) {
+func (h *dbHead) serializeHead(userPW []byte) ([]byte, error) {
 	serializedHead := h.serializeHeadCore()
 	fileHeader := make([]byte, 128)
 	if !h.useEncryption {
@@ -76,7 +76,7 @@ func (h *head) serializeHead(userPW []byte) ([]byte, error) {
 	return fileHeader, nil
 }
 
-func deserializeHead(data []byte, userPW []byte) (*head, error) {
+func deserializeHead(data []byte, userPW []byte) (*dbHead, error) {
 	if userPW == nil && bytes.Equal(data[:5], []byte{103, 111, 68, 66, 00}) {
 		head := deserializeHeadCore(data[5:])
 		head.useEncryption = false
@@ -115,15 +115,17 @@ func deserializeHead(data []byte, userPW []byte) (*head, error) {
 	return head, nil
 }
 
-func newBlankHead(useEncryption bool) (*head, error) {
-	head := head{useEncryption: useEncryption}
+func newBlankHead(useEncryption bool) (*dbHead, error) {
+	head := dbHead{useEncryption: useEncryption}
 	var err error
+	// try generating masterKey
 	if useEncryption {
 		head.masterKey, err = util.RandomIV(32)
 		if err != nil {
 			return nil, err
 		}
 	}
+	// assign values
 	head.version = util.NewVersion(MAJOR, MINOR, PATCH)
 	head.pageSize = DEFAULT_PAGE_SIZE
 	head.pageCount = 0
