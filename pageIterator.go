@@ -10,12 +10,16 @@ type pageIterator struct {
 	currPage *page
 }
 
-func (pi *pageIterator) top(length uint8) []byte {
+func (pi *pageIterator) read(length uint8) []byte {
 	return nil
 }
 
-func (pi *pageIterator) pop(length uint8) []byte {
+func (pi *pageIterator) move(length uint8) []byte {
 	return nil
+}
+
+func (pi *pageIterator) has(length uint8) bool {
+	return false
 }
 
 // New creates a new pageIterator
@@ -27,5 +31,6 @@ func (db *Database) newPageIterator(pageNum uint32) (*pageIterator, error) {
 	return &pageIterator{
 		db:       db,
 		currPage: page,
+		position: &util.Position{},
 	}, nil
 }
